@@ -8,7 +8,7 @@ ARG VERSION=v0.9.1
 ARG ARCH=amd64
 
 RUN mkdir -p /usr/src/cni/bin && \
-    wget https://github.com/containernetworking/plugins/releases/download/${VERSION}/cni-plugins-linux-${ARCH}-${VERSION}.tgz && \
+    curl -L -O https://github.com/containernetworking/plugins/releases/download/${VERSION}/cni-plugins-linux-${ARCH}-${VERSION}.tgz && \
     tar -xvf cni-plugins-linux-${ARCH}-${VERSION}.tgz -C /usr/src/cni/bin/ && \
     echo done
 
