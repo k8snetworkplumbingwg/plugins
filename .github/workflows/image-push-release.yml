@@ -3,14 +3,9 @@ on:
   push:
     tags:
       - v*
-  workflow_dispatch:
-    inputs:
-      version:
-        description: CNI network pluging version
-        required: true
 jobs:
-  push-amd64:
-    name: Image push/amd64
+  push-image:
+    name: Image build and push
     runs-on: ubuntu-latest
     steps:
       - name: Check out code into the Go module directory
@@ -39,6 +34,18 @@ jobs:
           flavor: |
             latest=false
 
+      - name: Discover CNI plugins version
+        run: |
+          echo "CNI_VERSION=$(echo ${{ github.ref_name }} | awk '{gsub(/-update.*$/,"")}1')" >> $GITHUB_ENV
+
+      - name: Validate CNI version
+        run: |
+          if [[ "${{ env.CNI_VERSION }}" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)?$ ]]; then
+            echo "Valid CNI Version"
+          else
+            echo "Invalid CNI version/tag provided"
+            exit 1
+          fi
       - name: Build and push container image
         uses: docker/build-push-action@v4
         with:
@@ -47,6 +54,8 @@ jobs:
             "github_token=${{ secrets.GITHUB_TOKEN }}"
           platforms: linux/amd64,linux/arm64
           push: true
+          build-args: |
+            VERSION=${{ env.CNI_VERSION }}
           tags: |
-            ghcr.io/k8snetworkplumbingwg/plugins:${{ github.event.inputs.version }}
+            ghcr.io/k8snetworkplumbingwg/plugins:${{ github.ref_name }}
           file: ./Dockerfile
